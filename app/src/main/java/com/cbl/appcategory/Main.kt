@@ -2,6 +2,7 @@ package com.cbl.appcategory
 
 import android.app.Application
 import androidx.room.Room
+import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.data.local.LocalRoomDatabase
 import com.facebook.drawee.backends.pipeline.Fresco
 import retrofit2.Retrofit
@@ -17,13 +18,13 @@ class Main : Application() {
         Fresco.initialize(this)
 
         retrofit = Retrofit.Builder()
-            .baseUrl("https://itunes.apple.com/")
+            .baseUrl(Constants.BASE_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
 
         db = Room.databaseBuilder(
             applicationContext,
-            LocalRoomDatabase::class.java, "AppTopList"
+            LocalRoomDatabase::class.java, Constants.DB_NAME
         ).build()
     }
 }

@@ -5,6 +5,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
+/**
+ * App List Res
+ */
 data class AppInfoRes(
     val feed:AppInfoEntry
 )
@@ -14,14 +17,6 @@ data class AppInfoEntry(
 )
 
 data class AppInfo(
-//    @SerializedName("im:name")
-//    val name:LabelRes,
-//    @SerializedName("im:image")
-//    val images:List<LabelRes>,
-//    @SerializedName("summary")
-//    val summary:LabelRes,
-//    @SerializedName("category")
-//    val category:LabelRes,
     @SerializedName("id")
     val id: LabelRes
 )
@@ -32,21 +27,13 @@ data class LabelRes(
 )
 
 data class AttributeRes(
-//    val height:String,
-//    val amount:String,
-//    val currency:String,
-//    val term:String,
-//    val label:String,
-//    val rel:String,
-//    val type:String,
-//    val href:String,
-//    val scheme:String,
     @SerializedName("im:id")
     val id: String
-//    @SerializedName("im:bundleId")
-//    val bundleId:String
 )
 
+/**
+ * App Detail Res
+ */
 data class AppDetailInfoRes(
     val results:List<AppDetailInfo>
 )

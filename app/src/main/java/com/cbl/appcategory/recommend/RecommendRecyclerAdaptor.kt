@@ -16,7 +16,7 @@ class RecommendRecyclerAdaptor :
     RecyclerView.Adapter<RecommendRecyclerAdaptor.RecommendAppItemViewHolder>() {
     private val models = mutableListOf<AppDetailInfo>()
 
-    fun setDate(list: List<AppDetailInfo>) {
+    fun setData(list: List<AppDetailInfo>) {
         this.models.clear()
         this.models.addAll(list)
         this.notifyDataSetChanged()

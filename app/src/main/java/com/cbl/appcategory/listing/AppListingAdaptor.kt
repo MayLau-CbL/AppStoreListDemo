@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cbl.appcategory.R
+import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.common.safeLet
 import com.cbl.appcategory.data.AppDetailInfo
 import com.cbl.appcategory.recommend.RecommendRecyclerAdaptor
@@ -87,7 +88,7 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
     override fun onBindViewHolder(holder: BaseAppListingViewHolder, position: Int) {
         when (holder) {
             is HorizontalRecyclerViewHolder -> {
-                holder.setDate(this.recommendModels)
+                holder.setData(this.recommendModels)
             }
             is AppOddDetailItemViewHolder -> {
                 val index = position - 1
@@ -143,16 +144,16 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
         private val tvLabel = itemView.findViewById<TextView>(R.id.tv_label)
 
         init {
-            tvLabel.text = ""
+            tvLabel.text = Constants.EMPTY
             rv.layoutManager =
                 LinearLayoutManager(parent.context, LinearLayoutManager.HORIZONTAL, false)
             rv.adapter = RecommendRecyclerAdaptor()
         }
 
-        fun setDate(list: List<AppDetailInfo>) {
-            (rv.adapter as? RecommendRecyclerAdaptor)?.setDate(list)
+        fun setData(list: List<AppDetailInfo>) {
+            (rv.adapter as? RecommendRecyclerAdaptor)?.setData(list)
             if (list.isEmpty()) {
-                tvLabel.text = ""
+                tvLabel.text = Constants.EMPTY
             } else {
                 tvLabel.setText(R.string.recommend)
             }
@@ -183,7 +184,7 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
                 tvLabel.text = it.trackCensoredName
                 tvSubLabel.text = it.genres.getOrNull(0)
 
-                it.averageUserRating?.subSequence(0, 4)?.toString()?.toFloatOrNull()?.let {
+                it.averageUserRating?.take(4)?.toString()?.toFloatOrNull()?.let {
                     updateRating(ivStar0, it, 0f)
                     updateRating(ivStar1, it, 1f)
                     updateRating(ivStar2, it, 2f)
@@ -191,7 +192,7 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
                     updateRating(ivStar4, it, 4f)
                 }
 
-                tvReviewUser.text = "(${getKMT(it.userRatingCount)})"
+                tvReviewUser.text = "(${getKMB(it.userRatingCount)})"
                 safeLet(it.artworkUrl60, it.artworkUrl512) { safe60, safe521 ->
                     val lowResRequest = ImageRequestBuilder.newBuilderWithSource(Uri.parse(safe60))
                         .setProgressiveRenderingEnabled(true)
@@ -241,14 +242,14 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
             appDetailInfo?.let {
                 tvLabel.text = it.trackCensoredName
                 tvSubLabel.text = it.genres.getOrNull(0)
-                it.averageUserRating?.subSequence(0, 4)?.toString()?.toFloatOrNull()?.let {
+                it.averageUserRating?.take(4)?.toString()?.toFloatOrNull()?.let {
                     updateRating(ivStar0, it, 0f)
                     updateRating(ivStar1, it, 1f)
                     updateRating(ivStar2, it, 2f)
                     updateRating(ivStar3, it, 3f)
                     updateRating(ivStar4, it, 4f)
                 }
-                tvReviewUser.text = "(${getKMT(it.userRatingCount)})"
+                tvReviewUser.text = "(${getKMB(it.userRatingCount)})"
                 safeLet(it.artworkUrl60, it.artworkUrl512) { safe60, safe521 ->
                     val lowResRequest = ImageRequestBuilder.newBuilderWithSource(Uri.parse(safe60))
                         .setProgressiveRenderingEnabled(true)
@@ -292,14 +293,14 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
             }
         }
 
-        protected fun getKMT(value: String?): String? {
+        protected fun getKMB(value: String?): String? {
             value?.toIntOrNull()?.let {
                 return when {
-                    it >= 100000000 -> {
-                        "${it / 1000000000}T"
+                    it >= 1000_000_000 -> {
+                        "${it / 1000_000_000}B"
                     }
-                    it >= 1000000 -> {
-                        "${it / 1000000}M"
+                    it >= 1000_000 -> {
+                        "${it / 1000_000}M"
                     }
                     it >= 1000 -> {
                         "${it / 1000}k"

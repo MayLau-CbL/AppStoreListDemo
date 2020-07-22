@@ -10,13 +10,14 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.common.safeLet
 import com.cbl.appcategory.data.AppDetailInfo
 import com.cbl.appcategory.listing.AppListingAdaptor
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
-    lateinit var listViewModel: ListViewModel
+    private lateinit var listViewModel: ListViewModel
 
     private var visibleItemCount: Int = 0
     private var totalItemCount: Int = 0
@@ -87,13 +88,15 @@ class MainActivity : AppCompatActivity() {
                 connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             )
         ).get(ListViewModel::class.java)
+
+        listViewModel.refresh()
     }
 
     private fun initObserver() {
         listViewModel.isLoadingLiveData.observe(this, Observer<Boolean> {
             if (it) {
                 (rv_app_info?.adapter as? AppListingAdaptor)?.setFooterMsg(getString(R.string.loading))
-            }else{
+            } else {
                 srl_main.isRefreshing = false
             }
         })
@@ -146,14 +149,12 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
                 ) { topList, recommendList ->
-                    (rv_app_info?.adapter as? AppListingAdaptor)?.setListData(
-                        topList,
-                        recommendList
-                    )
+                    (rv_app_info?.adapter as? AppListingAdaptor)?.apply {
+                        setFooterMsg(Constants.EMPTY)
+                        setListData(topList, recommendList)
+                    }
                 }
             }
         })
     }
-
-
 }

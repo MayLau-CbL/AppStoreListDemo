@@ -2,6 +2,7 @@ package com.cbl.appcategory
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.data.AppDetailInfo
 import com.cbl.appcategory.data.AppInfo
 
@@ -11,8 +12,8 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
         const val TTL_PAGE = 100
     }
 
-    val appInfoListData = MutableLiveData<MutableList<AppInfo>>()
-    val appRecommendInfoListData = MutableLiveData<MutableList<AppInfo>>()
+    private val appInfoListData = MutableLiveData<MutableList<AppInfo>>()
+    private val appRecommendInfoListData = MutableLiveData<MutableList<AppInfo>>()
 
     val appInfoDetailListData = MutableLiveData<MutableList<AppDetailInfo>>()
     val appRecommendInfoDetailListData = MutableLiveData<MutableList<AppDetailInfo>>()
@@ -30,9 +31,7 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
         appRecommendInfoDetailListData.value = mutableListOf<AppDetailInfo>()
         isLoadingLiveData.value = false
         isErrorLiveData.value = false
-        searchKeyword.value = ""
-
-        refresh()
+        searchKeyword.value = Constants.EMPTY
     }
 
     fun refresh() {

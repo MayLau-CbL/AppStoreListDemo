@@ -99,7 +99,7 @@ open class ListRepo(
                 val thread = Thread {
                     when (listType) {
                         ListType.TOP_LIST -> {
-                            db.appDetailInfoResDao().getAll()?.apply {
+                            db.appDetailInfoResDao()?.getAll()?.apply {
                                 if (isNotEmpty()) {
                                     listRepoListener?.getTopAppInfoDetailList(this)
                                 } else {
@@ -109,7 +109,7 @@ open class ListRepo(
 
                         }
                         ListType.RECOMMEND_LIST -> {
-                            db.appDetailInfoResDao().getAll()?.apply {
+                            db.appDetailInfoResDao()?.getAll()?.apply {
                                 if (isNotEmpty()) {
                                     listRepoListener?.getRecommendAppInfoDetailList(this)
                                 } else {
@@ -167,9 +167,6 @@ open class ListRepo(
                     }
                 })
         }
-//        else {
-//            listRepoListener?.networkFail()
-//        }
     }
 
     fun cacheAppDetailInfo(list: List<AppDetailInfo>) {
@@ -180,12 +177,14 @@ open class ListRepo(
         thread.start()
     }
 
-    protected fun isNetworkAvailable(): Boolean {
+    private fun isNetworkAvailable(): Boolean {
         var result: Boolean = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             val activeNetwork = connectivityManager.activeNetwork ?: return false
             val networkCapabilities =
-                connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
+                connectivityManager.getNetworkCapabilities(activeNetwork) ?: run {
+                    return false
+                }
             result = when {
                 networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
                 networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
@@ -193,16 +192,14 @@ open class ListRepo(
                 else -> false
             }
         } else {
-            connectivityManager.run {
-                connectivityManager.activeNetworkInfo?.run {
-                    result = when (type) {
-                        ConnectivityManager.TYPE_WIFI -> true
-                        ConnectivityManager.TYPE_MOBILE -> true
-                        ConnectivityManager.TYPE_ETHERNET -> true
-                        else -> false
-                    }
-
+            connectivityManager?.activeNetworkInfo?.run {
+                result = when (type) {
+                    ConnectivityManager.TYPE_WIFI -> true
+                    ConnectivityManager.TYPE_MOBILE -> true
+                    ConnectivityManager.TYPE_ETHERNET -> true
+                    else -> false
                 }
+
             }
         }
         return result
