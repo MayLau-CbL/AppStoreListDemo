@@ -9,3 +9,5 @@ Applied 3rd party library:
 1. google material
 2. fresco
 3. retrofit2
+
+apk placed at app/release
