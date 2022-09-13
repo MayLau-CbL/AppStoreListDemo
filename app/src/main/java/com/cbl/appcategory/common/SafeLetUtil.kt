@@ -1,3 +1,5 @@
+@file:Suppress("unused")
+
 package com.cbl.appcategory.common
 
 inline fun <T1 : Any, T2 : Any, R : Any> safeLet(p1: T1?, p2: T2?, block: (T1, T2) -> R?): R? {

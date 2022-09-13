@@ -2,7 +2,6 @@ package com.cbl.appcategory
 
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
-import android.os.Build
 import com.cbl.appcategory.data.AppDetailInfo
 import com.cbl.appcategory.data.AppDetailInfoRes
 import com.cbl.appcategory.data.AppInfo
@@ -42,7 +41,7 @@ open class ListRepo(
         getAppInfoDetail(idList, ListType.RECOMMEND_LIST)
 
 
-    fun getAppInfoDetail(idList: List<String>?, listType: ListType) {
+    private fun getAppInfoDetail(idList: List<String>?, listType: ListType) {
         if (isNetworkAvailable() && idList != null) {
             service.getAppDetail(idList.joinToString(separator = ","))
                 .enqueue(object : Callback<AppDetailInfoRes> {
@@ -54,7 +53,7 @@ open class ListRepo(
                         call: Call<AppDetailInfoRes>,
                         response: Response<AppDetailInfoRes>
                     ) {
-                        response?.body()?.results?.let { appDetailInfoList ->
+                        response.body()?.results?.let { appDetailInfoList ->
                             val resultList = mutableListOf<AppDetailInfo>()
                             idList.forEach { id ->
                                 val item =
@@ -73,7 +72,7 @@ open class ListRepo(
                                             userRatingCount = null,
                                             description = null,
                                             artistName = null,
-                                            genres = listOf<String>()
+                                            genres = listOf()
                                         )
                                     )
                                 }
@@ -86,7 +85,7 @@ open class ListRepo(
                                 ListType.RECOMMEND_LIST -> {
                                     listRepoListener?.getRecommendAppInfoDetailList(resultList)
                                 }
-                                else -> throw Exception("Invalid List Type")
+
                             }
 
                         } ?: run {
@@ -99,7 +98,7 @@ open class ListRepo(
                 val thread = Thread {
                     when (listType) {
                         ListType.TOP_LIST -> {
-                            db.appDetailInfoResDao()?.getAll()?.apply {
+                            db.appDetailInfoResDao().getAll().apply {
                                 if (isNotEmpty()) {
                                     listRepoListener?.getTopAppInfoDetailList(this)
                                 } else {
@@ -109,7 +108,7 @@ open class ListRepo(
 
                         }
                         ListType.RECOMMEND_LIST -> {
-                            db.appDetailInfoResDao()?.getAll()?.apply {
+                            db.appDetailInfoResDao().getAll().apply {
                                 if (isNotEmpty()) {
                                     listRepoListener?.getRecommendAppInfoDetailList(this)
                                 } else {
@@ -117,7 +116,7 @@ open class ListRepo(
                                 }
                             }
                         }
-                        else -> throw Exception("Invalid List Type")
+
                     }
                 }
                 thread.start()
@@ -139,7 +138,7 @@ open class ListRepo(
                         call: Call<AppInfoRes>,
                         response: Response<AppInfoRes>
                     ) {
-                        response?.body()?.feed?.entry?.let {
+                        response.body()?.feed?.entry?.let {
                             listRepoListener?.getTopAppList(it)
                         }
                     }
@@ -161,7 +160,7 @@ open class ListRepo(
                         call: Call<AppInfoRes>,
                         response: Response<AppInfoRes>
                     ) {
-                        response?.body()?.feed?.entry?.let {
+                        response.body()?.feed?.entry?.let {
                             listRepoListener?.getRecommendAppList(it)
                         }
                     }
@@ -178,29 +177,16 @@ open class ListRepo(
     }
 
     private fun isNetworkAvailable(): Boolean {
-        var result: Boolean = false
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            val activeNetwork = connectivityManager.activeNetwork ?: return false
-            val networkCapabilities =
-                connectivityManager.getNetworkCapabilities(activeNetwork) ?: run {
-                    return false
-                }
-            result = when {
-                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
-                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
-                networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
-                else -> false
+        val activeNetwork = connectivityManager.activeNetwork ?: return false
+        val networkCapabilities =
+            connectivityManager.getNetworkCapabilities(activeNetwork) ?: run {
+                return false
             }
-        } else {
-            connectivityManager?.activeNetworkInfo?.run {
-                result = when (type) {
-                    ConnectivityManager.TYPE_WIFI -> true
-                    ConnectivityManager.TYPE_MOBILE -> true
-                    ConnectivityManager.TYPE_ETHERNET -> true
-                    else -> false
-                }
-
-            }
+       val result = when {
+            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
+            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
+            networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true
+            else -> false
         }
         return result
     }

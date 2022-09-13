@@ -11,7 +11,7 @@ import org.mockito.Mockito.mock
 
 class ListItemFormatterTest {
 
-    lateinit var baseAppListingViewHolder: MockBaseAppListingViewHolder
+    private lateinit var baseAppListingViewHolder: MockBaseAppListingViewHolder
 
     @Before
     fun init() {

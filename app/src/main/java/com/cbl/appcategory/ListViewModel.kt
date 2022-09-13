@@ -25,10 +25,10 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
 
     init {
         repo.listRepoListener = this
-        appInfoListData.value = mutableListOf<AppInfo>()
-        appRecommendInfoListData.value = mutableListOf<AppInfo>()
-        appInfoDetailListData.value = mutableListOf<AppDetailInfo>()
-        appRecommendInfoDetailListData.value = mutableListOf<AppDetailInfo>()
+        appInfoListData.value = mutableListOf()
+        appRecommendInfoListData.value = mutableListOf()
+        appInfoDetailListData.value = mutableListOf()
+        appRecommendInfoDetailListData.value = mutableListOf()
         isLoadingLiveData.value = false
         isErrorLiveData.value = false
         searchKeyword.value = Constants.EMPTY

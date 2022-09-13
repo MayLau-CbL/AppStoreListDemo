@@ -12,3 +12,5 @@
 /captures
 .externalNativeBuild
 .cxx
+# ignore release meta
+/app/release/output-metadata.json

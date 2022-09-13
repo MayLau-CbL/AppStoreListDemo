@@ -6,13 +6,11 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.common.safeLet
-import com.cbl.appcategory.data.AppDetailInfo
 import com.cbl.appcategory.listing.AppListingAdaptor
 import kotlinx.android.synthetic.main.activity_main.*
 
@@ -21,8 +19,8 @@ class MainActivity : AppCompatActivity() {
 
     private var visibleItemCount: Int = 0
     private var totalItemCount: Int = 0
-    private var pastVisiblesItems: Int = 0
-    private var mLayoutManager: LinearLayoutManager? = null;
+    private var pastVisibleItems: Int = 0
+    private var mLayoutManager: LinearLayoutManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,10 +43,10 @@ class MainActivity : AppCompatActivity() {
                 if (dy > 0) { //check for scroll down
                     visibleItemCount = mLayoutManager?.childCount ?: 0
                     totalItemCount = mLayoutManager?.itemCount ?: 0
-                    pastVisiblesItems = mLayoutManager?.findFirstVisibleItemPosition() ?: 0
+                    pastVisibleItems = mLayoutManager?.findFirstVisibleItemPosition() ?: 0
 
-                    if (listViewModel.isLoadingLiveData.value != true && listViewModel.searchKeyword?.value?.isNullOrEmpty() == true) {
-                        if ((visibleItemCount + pastVisiblesItems) >= totalItemCount) {
+                    if (listViewModel.isLoadingLiveData.value != true && listViewModel.searchKeyword.value.isNullOrEmpty()) {
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
                             listViewModel.getNextTopAppListDetail()
                         }
                     }
@@ -87,35 +85,35 @@ class MainActivity : AppCompatActivity() {
                 db = app.db,
                 connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
             )
-        ).get(ListViewModel::class.java)
+        )[ListViewModel::class.java]
 
         listViewModel.refresh()
     }
 
     private fun initObserver() {
-        listViewModel.isLoadingLiveData.observe(this, Observer<Boolean> {
+        listViewModel.isLoadingLiveData.observe(this) {
             if (it) {
                 (rv_app_info?.adapter as? AppListingAdaptor)?.setFooterMsg(getString(R.string.loading))
             } else {
                 srl_main.isRefreshing = false
             }
-        })
+        }
 
-        listViewModel.isErrorLiveData.observe(this, Observer<Boolean> {
+        listViewModel.isErrorLiveData.observe(this) {
             if (it) {
                 (rv_app_info?.adapter as? AppListingAdaptor)?.setFooterMsg(getString(R.string.general_error_msg))
             }
-        })
+        }
 
-        listViewModel.appRecommendInfoDetailListData.observe(this, Observer<List<AppDetailInfo>> {
+        listViewModel.appRecommendInfoDetailListData.observe(this) {
             (rv_app_info?.adapter as? AppListingAdaptor)?.setRecommendListData(it)
-        })
+        }
 
-        listViewModel.appInfoDetailListData.observe(this, Observer<List<AppDetailInfo>> {
+        listViewModel.appInfoDetailListData.observe(this) {
             (rv_app_info?.adapter as? AppListingAdaptor)?.setAppTopListData(it)
-        })
+        }
 
-        listViewModel.searchKeyword.observe(this, Observer<CharSequence> { keyword ->
+        listViewModel.searchKeyword.observe(this) { keyword ->
             if (keyword.isNullOrEmpty()) {
                 safeLet(
                     listViewModel.appInfoDetailListData.value,
@@ -134,7 +132,7 @@ class MainActivity : AppCompatActivity() {
                                 it.artistName?.contains(
                                     keyword,
                                     true
-                                ) == true || it.genres?.contains(
+                                ) == true || it.genres.contains(
                             keyword
                         )
                     },
@@ -144,7 +142,7 @@ class MainActivity : AppCompatActivity() {
                                 it.artistName?.contains(
                                     keyword,
                                     true
-                                ) == true || it.genres?.contains(
+                                ) == true || it.genres.contains(
                             keyword
                         )
                     }
@@ -155,6 +153,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-        })
+        }
     }
 }

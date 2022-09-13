@@ -2,7 +2,7 @@
 
 ## Basic
 
-Target sdk: 29
+Target sdk: 33
 Minimum sdk: 23
 
 Applied 3rd party library:

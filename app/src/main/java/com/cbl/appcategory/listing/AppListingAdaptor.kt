@@ -180,11 +180,11 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
 
         fun setData(appDetailInfo: AppDetailInfo?, seq: Int) {
             tvSeq.text = seq.toString()
-            appDetailInfo?.let {
+            appDetailInfo?.let { it ->
                 tvLabel.text = it.trackCensoredName
                 tvSubLabel.text = it.genres.getOrNull(0)
 
-                it.averageUserRating?.take(4)?.toString()?.toFloatOrNull()?.let {
+                it.averageUserRating?.take(4)?.toFloatOrNull()?.let { it ->
                     updateRating(ivStar0, it, 0f)
                     updateRating(ivStar1, it, 1f)
                     updateRating(ivStar2, it, 2f)
@@ -242,12 +242,12 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
             appDetailInfo?.let {
                 tvLabel.text = it.trackCensoredName
                 tvSubLabel.text = it.genres.getOrNull(0)
-                it.averageUserRating?.take(4)?.toString()?.toFloatOrNull()?.let {
-                    updateRating(ivStar0, it, 0f)
-                    updateRating(ivStar1, it, 1f)
-                    updateRating(ivStar2, it, 2f)
-                    updateRating(ivStar3, it, 3f)
-                    updateRating(ivStar4, it, 4f)
+                it.averageUserRating?.take(4)?.toFloatOrNull()?.let {score->
+                    updateRating(ivStar0, score, 0f)
+                    updateRating(ivStar1, score, 1f)
+                    updateRating(ivStar2, score, 2f)
+                    updateRating(ivStar3, score, 3f)
+                    updateRating(ivStar4, score, 4f)
                 }
                 tvReviewUser.text = "(${getKMB(it.userRatingCount)})"
                 safeLet(it.artworkUrl60, it.artworkUrl512) { safe60, safe521 ->
@@ -282,13 +282,13 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
         protected fun updateRating(iv: ImageView, score: Float, div: Float) {
             when {
                 score > (1 + div) -> {
-                    iv.setImageResource(R.drawable.ic_full_star);
+                    iv.setImageResource(R.drawable.ic_full_star)
                 }
                 score >= (0.5f + div) -> {
-                    iv.setImageResource(R.drawable.ic_half_star);
+                    iv.setImageResource(R.drawable.ic_half_star)
                 }
                 else -> {
-                    iv.setImageResource(R.drawable.ic_holo_star);
+                    iv.setImageResource(R.drawable.ic_holo_star)
                 }
             }
         }
