@@ -7,11 +7,11 @@ Minimum sdk: 23
 
 ## Approach
 
-Image Handling: Fresco
-DI: Hilt
-Network: Retrofit2
-DB: Room
-Background Executions : Coroutine
+1. Image Handling: Fresco
+2. DI: Hilt
+3. Network: Retrofit2
+4. DB: Room
+5. Background Executions : Coroutine
 
 ## Apk
 
