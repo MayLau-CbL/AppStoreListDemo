@@ -1,12 +1,15 @@
 package com.cbl.appcategory
 
+import android.accounts.NetworkErrorException
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.data.AppDetailInfo
 import com.cbl.appcategory.data.AppInfo
+import kotlinx.coroutines.launch
 
-class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener {
+class ListViewModel(private val repo: ListRepo) : ViewModel() {
     private companion object {
         const val PAGE_SIZE = 10
         const val TTL_PAGE = 100
@@ -24,7 +27,6 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
     val searchKeyword = MutableLiveData<CharSequence>()
 
     init {
-        repo.listRepoListener = this
         appInfoListData.value = mutableListOf()
         appRecommendInfoListData.value = mutableListOf()
         appInfoDetailListData.value = mutableListOf()
@@ -52,7 +54,7 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
             appInfoListData.value?.apply {
                 if (this.size >= size + PAGE_SIZE) {
                     fetchAppTopInfoDetail(subList(size, size + PAGE_SIZE))
-                }else{
+                } else {
                     //if smaller, then it must be either using cache or list returned not correct
                     //ask user refresh whole list
                     error()
@@ -70,28 +72,72 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
      */
     private fun fetchAppInfoList() {
         isLoadingLiveData.value = true
-        repo.getAppTopList()
+        viewModelScope.launch {
+            val result = repo.getAppTopList()
+            if (result.isSuccess) {
+                result.getOrNull()?.apply {
+                    getTopAppList(this)
+                }
+            } else {
+                if (result.exceptionOrNull() is NetworkErrorException) {
+                    networkFail()
+                } else {
+                    error()
+                }
+            }
+        }
     }
 
     private fun fetchAppRecommendInfoList() {
-        repo.getAppRecommendList()
+        viewModelScope.launch {
+            val result = repo.getAppRecommendList()
+            if (result.isSuccess) {
+                result.getOrNull()?.apply {
+                    getRecommendAppList(this)
+                }
+            } else {
+                if (result.exceptionOrNull() is NetworkErrorException) {
+                    networkFail()
+                } else {
+                    error()
+                }
+            }
+        }
     }
 
     private fun fetchAppTopInfoDetail(list: List<AppInfo>?) {
         if (isLoadingLiveData.value != true) {
             isLoadingLiveData.value = true
-            repo.getTopAppInfoDetail(list?.map { it.id.attributes.id })
+            viewModelScope.launch {
+                val result = repo.getTopAppInfoDetail(list?.map { it.id.attributes.id })
+                if (result.isSuccess) {
+                    result.getOrNull()?.apply {
+                        getTopAppInfoDetailList(this.list)
+                    }
+                } else {
+                    error()
+                }
+            }
         }
     }
 
     private fun fetchAppRecommendInfoDetail(list: List<AppInfo>) {
-        repo.getRecommendAppInfoDetail(list.map { it.id.attributes.id })
+        viewModelScope.launch {
+            val result = repo.getRecommendAppInfoDetail(list.map { it.id.attributes.id })
+            if (result.isSuccess) {
+                result.getOrNull()?.apply {
+                    getRecommendAppInfoDetailList(this.list)
+                }
+            } else {
+                error()
+            }
+        }
     }
 
     /**
-     * Listener
+     * Update UI Data
      */
-    override fun getTopAppList(list: List<AppInfo>) {
+    private fun getTopAppList(list: List<AppInfo>) {
         appInfoListData.value = appInfoListData.value?.apply {
             clear()
             addAll(list)
@@ -101,7 +147,7 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
         fetchAppTopInfoDetail(list.subList(0, PAGE_SIZE))
     }
 
-    override fun getRecommendAppList(list: List<AppInfo>) {
+    private fun getRecommendAppList(list: List<AppInfo>) {
         appRecommendInfoListData.value = appRecommendInfoListData.value?.apply {
             clear()
             addAll(list)
@@ -109,7 +155,7 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
         fetchAppRecommendInfoDetail(list)
     }
 
-    override fun getTopAppInfoDetailList(list: List<AppDetailInfo>) {
+    private fun getTopAppInfoDetailList(list: List<AppDetailInfo>) {
         appInfoDetailListData.postValue(appInfoDetailListData.value?.apply {
             addAll(list)
         })
@@ -117,18 +163,18 @@ class ListViewModel(private val repo: ListRepo) : ViewModel(), IListRepoListener
         isErrorLiveData.postValue(false)
     }
 
-    override fun getRecommendAppInfoDetailList(list: List<AppDetailInfo>) {
+    private fun getRecommendAppInfoDetailList(list: List<AppDetailInfo>) {
         appRecommendInfoDetailListData.value = appRecommendInfoDetailListData.value?.apply {
             addAll(list)
         }
     }
 
-    override fun networkFail() {
+    private fun networkFail() {
         isLoadingLiveData.value = false
         fetchAppTopInfoDetail(null)
     }
 
-    override fun error() {
+    private fun error() {
         isLoadingLiveData.postValue(false)
         isErrorLiveData.postValue(true)
     }

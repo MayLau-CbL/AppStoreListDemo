@@ -25,6 +25,7 @@ class Main : Application() {
         db = Room.databaseBuilder(
             applicationContext,
             LocalRoomDatabase::class.java, Constants.DB_NAME
-        ).build()
+        )
+            .build()
     }
 }

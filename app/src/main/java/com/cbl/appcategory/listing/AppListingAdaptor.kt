@@ -242,7 +242,7 @@ class AppListingAdaptor : RecyclerView.Adapter<AppListingAdaptor.BaseAppListingV
             appDetailInfo?.let {
                 tvLabel.text = it.trackCensoredName
                 tvSubLabel.text = it.genres.getOrNull(0)
-                it.averageUserRating?.take(4)?.toFloatOrNull()?.let {score->
+                it.averageUserRating?.take(4)?.toFloatOrNull()?.let { score ->
                     updateRating(ivStar0, score, 0f)
                     updateRating(ivStar1, score, 1f)
                     updateRating(ivStar2, score, 2f)

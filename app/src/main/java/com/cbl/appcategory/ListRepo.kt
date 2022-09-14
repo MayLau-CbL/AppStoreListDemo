@@ -1,5 +1,6 @@
 package com.cbl.appcategory
 
+import android.accounts.NetworkErrorException
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import com.cbl.appcategory.data.AppDetailInfo
@@ -8,25 +9,15 @@ import com.cbl.appcategory.data.AppInfo
 import com.cbl.appcategory.data.AppInfoRes
 import com.cbl.appcategory.data.local.LocalRoomDatabase
 import com.cbl.appcategory.data.network.AppStoreServerInterface
-import retrofit2.Call
-import retrofit2.Callback
 import retrofit2.Response
-
-interface IListRepoListener {
-    fun getTopAppList(list: List<AppInfo>)
-    fun getRecommendAppList(list: List<AppInfo>)
-
-    fun getTopAppInfoDetailList(list: List<AppDetailInfo>)
-    fun getRecommendAppInfoDetailList(list: List<AppDetailInfo>)
-
-    fun networkFail()
-    fun error()
-}
+import retrofit2.awaitResponse
 
 enum class ListType {
     TOP_LIST,
     RECOMMEND_LIST
 }
+
+data class AppInfoDetails(val listType: ListType, val list: List<AppDetailInfo>)
 
 open class ListRepo(
     private val service: AppStoreServerInterface,
@@ -34,146 +25,108 @@ open class ListRepo(
     private val connectivityManager: ConnectivityManager
 ) {
 
-    var listRepoListener: IListRepoListener? = null
 
-    fun getTopAppInfoDetail(idList: List<String>?) = getAppInfoDetail(idList, ListType.TOP_LIST)
-    fun getRecommendAppInfoDetail(idList: List<String>?) =
+    suspend fun getTopAppInfoDetail(idList: List<String>?): Result<AppInfoDetails> =
+        getAppInfoDetail(idList, ListType.TOP_LIST)
+
+    suspend fun getRecommendAppInfoDetail(idList: List<String>?): Result<AppInfoDetails> =
         getAppInfoDetail(idList, ListType.RECOMMEND_LIST)
 
 
-    private fun getAppInfoDetail(idList: List<String>?, listType: ListType) {
-        if (isNetworkAvailable() && idList != null) {
-            service.getAppDetail(idList.joinToString(separator = ","))
-                .enqueue(object : Callback<AppDetailInfoRes> {
-                    override fun onFailure(call: Call<AppDetailInfoRes>, t: Throwable) {
-                        listRepoListener?.error()
-                    }
+    private suspend fun getAppInfoDetail(
+        idList: List<String>?,
+        listType: ListType
+    ): Result<AppInfoDetails> {
+        if (idList.isNullOrEmpty()) {
+            return Result.failure(Exception())
+        }
 
-                    override fun onResponse(
-                        call: Call<AppDetailInfoRes>,
-                        response: Response<AppDetailInfoRes>
-                    ) {
-                        response.body()?.results?.let { appDetailInfoList ->
-                            val resultList = mutableListOf<AppDetailInfo>()
-                            idList.forEach { id ->
-                                val item =
-                                    appDetailInfoList.mapNotNull { if (it.trackId == id) it else null }
-                                        .getOrNull(0)
-                                if (item != null) {
-                                    resultList.add(item)
-                                } else {
-                                    resultList.add(
-                                        AppDetailInfo(
-                                            trackId = id,
-                                            artworkUrl60 = null,
-                                            artworkUrl512 = null,
-                                            trackCensoredName = null,
-                                            averageUserRating = null,
-                                            userRatingCount = null,
-                                            description = null,
-                                            artistName = null,
-                                            genres = listOf()
-                                        )
-                                    )
-                                }
-                            }
-                            when (listType) {
-                                ListType.TOP_LIST -> {
-                                    cacheAppDetailInfo(resultList)
-                                    listRepoListener?.getTopAppInfoDetailList(resultList)
-                                }
-                                ListType.RECOMMEND_LIST -> {
-                                    listRepoListener?.getRecommendAppInfoDetailList(resultList)
-                                }
-
-                            }
-
-                        } ?: run {
-                            listRepoListener?.error()
-                        }
-                    }
-                })
-        } else {
-            if (idList.isNullOrEmpty()) {
-                val thread = Thread {
-                    when (listType) {
-                        ListType.TOP_LIST -> {
-                            db.appDetailInfoResDao().getAll().apply {
-                                if (isNotEmpty()) {
-                                    listRepoListener?.getTopAppInfoDetailList(this)
-                                } else {
-                                    listRepoListener?.error()
-                                }
-                            }
-
-                        }
-                        ListType.RECOMMEND_LIST -> {
-                            db.appDetailInfoResDao().getAll().apply {
-                                if (isNotEmpty()) {
-                                    listRepoListener?.getRecommendAppInfoDetailList(this)
-                                } else {
-                                    listRepoListener?.error()
-                                }
-                            }
-                        }
-
+        if (isNetworkAvailable()) {
+            val response: Response<AppDetailInfoRes> =
+                service.getAppDetail(idList.joinToString(separator = ",")).awaitResponse()
+            response.body()?.results?.let { appDetailInfoList ->
+                val resultList = mutableListOf<AppDetailInfo>()
+                idList.forEach { id ->
+                    val item =
+                        appDetailInfoList.mapNotNull { if (it.trackId == id) it else null }
+                            .getOrNull(0)
+                    if (item != null) {
+                        resultList.add(item)
+                    } else {
+                        resultList.add(
+                            AppDetailInfo(
+                                trackId = id,
+                                artworkUrl60 = null,
+                                artworkUrl512 = null,
+                                trackCensoredName = null,
+                                averageUserRating = null,
+                                userRatingCount = null,
+                                description = null,
+                                artistName = null,
+                                genres = listOf()
+                            )
+                        )
                     }
                 }
-                thread.start()
-            } else {
-                listRepoListener?.error()
+                if (listType == ListType.TOP_LIST) {
+                    cacheAppDetailInfo(resultList)
+                }
+                return Result.success(
+                    AppInfoDetails(
+                        listType = listType,
+                        list = resultList
+                    )
+                )
+            } ?: run {
+                return Result.failure(Exception())
+            }
+
+        } else {
+            db.appDetailInfoResDao().getAll().apply {
+                return if (isNotEmpty()) {
+                    Result.success(AppInfoDetails(listType = listType, list = this))
+                } else {
+                    Result.failure(Exception())
+                }
             }
         }
     }
 
-    fun getAppTopList() {
+    suspend fun getAppTopList(): Result<List<AppInfo>> {
         if (isNetworkAvailable()) {
-            service.getAppTop100List()
-                .enqueue(object : Callback<AppInfoRes> {
-                    override fun onFailure(call: Call<AppInfoRes>, t: Throwable) {
-                        listRepoListener?.error()
-                    }
-
-                    override fun onResponse(
-                        call: Call<AppInfoRes>,
-                        response: Response<AppInfoRes>
-                    ) {
-                        response.body()?.feed?.entry?.let {
-                            listRepoListener?.getTopAppList(it)
-                        }
-                    }
-                })
-        } else {
-            listRepoListener?.networkFail()
+            val response: Response<AppInfoRes> = service.getAppTop100List()
+                .awaitResponse()
+            if (response.isSuccessful) {
+                response.body()?.feed?.entry?.let {
+                    return Result.success(it)
+                }
+            } else {
+                return Result.failure(Exception())
+            }
         }
+        return Result.failure(NetworkErrorException())
     }
 
-    fun getAppRecommendList() {
+    suspend fun getAppRecommendList(): Result<List<AppInfo>> {
         if (isNetworkAvailable()) {
-            service.getAppRecommendList()
-                .enqueue(object : Callback<AppInfoRes> {
-                    override fun onFailure(call: Call<AppInfoRes>, t: Throwable) {
-                        listRepoListener?.error()
-                    }
-
-                    override fun onResponse(
-                        call: Call<AppInfoRes>,
-                        response: Response<AppInfoRes>
-                    ) {
-                        response.body()?.feed?.entry?.let {
-                            listRepoListener?.getRecommendAppList(it)
-                        }
-                    }
-                })
+            val response = service.getAppRecommendList()
+                .awaitResponse()
+            if (response.isSuccessful) {
+                response.body()?.feed?.entry?.let {
+                    return Result.success(it)
+                }
+            } else {
+                return Result.failure(Exception())
+            }
         }
+        return Result.failure(NetworkErrorException())
     }
 
-    fun cacheAppDetailInfo(list: List<AppDetailInfo>) {
-        val thread = Thread {
+    private fun cacheAppDetailInfo(list: List<AppDetailInfo>) {
+        db.queryExecutor.execute {
             db.appDetailInfoResDao().deleteAll()
             db.appDetailInfoResDao().insertAll(list)
         }
-        thread.start()
     }
 
     private fun isNetworkAvailable(): Boolean {
@@ -182,7 +135,7 @@ open class ListRepo(
             connectivityManager.getNetworkCapabilities(activeNetwork) ?: run {
                 return false
             }
-       val result = when {
+        val result = when {
             networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> true
             networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> true
             networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> true

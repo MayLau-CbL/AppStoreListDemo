@@ -9,7 +9,7 @@ import com.google.gson.annotations.SerializedName
  * App List Res
  */
 data class AppInfoRes(
-    val feed:AppInfoEntry
+    val feed: AppInfoEntry
 )
 
 data class AppInfoEntry(
@@ -35,7 +35,7 @@ data class AttributeRes(
  * App Detail Res
  */
 data class AppDetailInfoRes(
-    val results:List<AppDetailInfo>
+    val results: List<AppDetailInfo>
 )
 
 @Entity
