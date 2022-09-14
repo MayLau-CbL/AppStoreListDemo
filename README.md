@@ -5,9 +5,14 @@
 Target sdk: 33
 Minimum sdk: 23
 
-Applied 3rd party library:
-1. google material
-2. fresco
-3. retrofit2
+## Approach
+
+Image Handling: Fresco
+DI: Hilt
+Network: Retrofit2
+DB: Room
+Background Executions : Coroutine
+
+## Apk
 
 apk placed at app/release
