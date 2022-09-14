@@ -1,21 +1,21 @@
 package com.cbl.appcategory
 
-import android.content.Context
-import android.net.ConnectivityManager
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
+import androidx.activity.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.cbl.appcategory.common.Constants
 import com.cbl.appcategory.common.safeLet
 import com.cbl.appcategory.listing.AppListingAdaptor
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main.*
 
+@AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-    private lateinit var listViewModel: ListViewModel
+    private val listViewModel: ListViewModel by viewModels()
 
     private var visibleItemCount: Int = 0
     private var totalItemCount: Int = 0
@@ -26,9 +26,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
         initUIElement()
-        initViewModel()
         initObserver()
     }
 
@@ -75,19 +73,6 @@ class MainActivity : AppCompatActivity() {
         srl_main.setOnRefreshListener {
             listViewModel.refresh()
         }
-    }
-
-    private fun initViewModel() {
-        val app = (application as Main)
-        listViewModel = ViewModelProvider(
-            this, CustomViewModelFactory(
-                retrofit = app.retrofit,
-                db = app.db,
-                connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            )
-        )[ListViewModel::class.java]
-
-        listViewModel.refresh()
     }
 
     private fun initObserver() {
